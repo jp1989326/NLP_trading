@@ -31,19 +31,70 @@ class RepeatedTimer(object):
         self.is_running = False
      
 
-def run():
+class request_news:
     
-    data_path = '/home/peng/Documents/NLP/dataset/NewsAPI/'
-    
-    def query(source, sortby='top'):       
+    def __init__(self, df_filter): 
+        self.title_string = []
+        self.detail_string = []
+        self.time_string = []
+        self.url_string =[]
+        self.source_string =[] 
+        self.df_filter = df_filter
+        self.source_relate =  np.array(self.df_filter['source_id'])
+        self.data_path = data_path = '/home/peng/Documents/NLP/dataset/NewsAPI/'
+        
+    def refresh_string(self):  
+        self.title_string = []
+        self.detail_string = []
+        self.time_string = []
+        self.url_string =[]
+        self.source_string =[] 
+        
+    def query(self, source, sortby='top'):       
         url = 'https://newsapi.org/v1/articles?'
         apikey='apiKey=6edc312567cd47e7a670525767fe5e08'
         source_url = 'source='+source+'&'
         sortby_url = 'sortBy='+str(sortby)+'&'
         query = url + source_url + sortby_url + apikey
         r = requests.get((query),verify=True)
-        return r.json()  
+        return r.json()          
         
+    def save_news(self):
+        
+        df_saved_news = pd.DataFrame({'source_id':self.source_string,'title':self.title_string,\
+                                     'detail':self.detail_string, 'time':self.time_string, 'url': self.url_string})
+                        
+        time_now = strftime("%Y-%m-%d-%H-%M-%S", localtime())
+        df_saved_news.to_csv(self.data_path + time_now[:-6]+'.csv', header = True)
+        print ('file saved')          
+        
+    def request_all(self,rolling = True):    
+        for source in self.source_relate:
+            sort_methods = np.array(self.df_filter[self.df_filter['source_id']==source]['sort'])[0]
+            if 'latest' in sort_methods:
+                sort_ = 'latest'
+            else:
+                sort_ = 'top'
+            news = self.query(source, sort_)
+            for single_news in news['articles']:                            
+                self.source_string.append(source)
+                self.title_string.append(single_news['title'])
+                self.detail_string.append(single_news['description'])
+                self.time_string.append(single_news['publishedAt'])
+                self.url_string.append(single_news['url'])
+                
+                if rolling == True:
+                    end_day = strftime("%Y-%m-%d-%H-%M-%S", localtime())
+                    if (len(self.title_string)%400 == 0):
+                        self.save_news()
+                    if  end_day[-8:-6]== '23':
+                        sleep(60*60*1)
+                        self.refresh_string() 
+                        
+def run():
+    
+    data_path = '/home/peng/Documents/NLP/dataset/NewsAPI/'
+            
     def source_list():   
         new = requests.get('https://newsapi.org/v1/sources?language=en')
         category = []
@@ -58,53 +109,36 @@ def run():
                 relate_list.append(0)
             source_id.append(i['id'])
             sort_.append(i['sortBysAvailable'])        
-        df_source = pd.DataFrame({'cat':category, 'source_id':source_id, 'relate':relate_list, 'sort':sort_})      
-        return df_source   
+        df_source = pd.DataFrame({'cat':category, 'source_id':source_id, 'relate':relate_list, 'sort':sort_})  
+        df_filter = df_source[df_source['relate']==1]
+        source_relate = np.array(df_filter['source_id'])
         
-    def request_all(rolling = True):    
-        for source in source_relate:
-            sort_methods = np.array(df_filter[df_filter['source_id']==source]['sort'])[0]
-            if 'latest' in sort_methods:
-                sort_ = 'latest'
-            else:
-                sort_ = 'top'
-            news = query(source, sort_)
-            for single_news in news['articles']:                            
-                source_string.append(source)
-                title_string.append(single_news['title'])
-                detail_string.append(single_news['description'])
-                time_string.append(single_news['publishedAt'])
-                url_string.append(single_news['url'])
-                
-                if rolling == True:
-                    if len(title_string)%400 == 0:
-                        df_saved_news = pd.DataFrame({'source_id':source_string,'title':title_string,\
-                                                     'detail':detail_string, 'time':time_string, 'url': url_string})
-                        
-                        time_now = strftime("%Y-%m-%d-%H-%M-%S", gmtime())
-                        df_saved_news.to_csv(data_path + time_now[:-9]+'.csv', header = True)
-                        print ('file saved')  
-                        
-    df_source = source_list()
-    df_filter = df_source[df_source['relate']==1]
-    source_relate = np.array(df_filter['source_id'])
+        return  df_filter  
     
-    title_string = []
-    detail_string = []
-    time_string = []
-    url_string =[]
-    source_string =[] 
     
-    time_interval = 60*30
-    mining_period = 60 * 60 * 8
+    time_interval = 60*60
+    mining_period = 60*60*36
+    
+    
+    df_filter = source_list()
+    
+    axe = request_news(df_filter)
+    
+    
+    
     
     print ("starting...")
-    rt = RepeatedTimer(time_interval, request_all, rolling=True) # it auto-starts, no need of rt.start()
+    rt = RepeatedTimer(time_interval, axe.request_all, rolling=True) # it auto-starts, no need of rt.start()
     try:
         sleep(mining_period) # your long-running job goes here...
     finally:
         rt.stop() # better in a try/finally block to make sure the program ends!
-    
+        
+    axe.save_news()
+    print ('finished...')          
+
+
+
                            
 if __name__ == '__main__': run()
 
