@@ -43,12 +43,13 @@ class request_news:
         self.source_relate =  np.array(self.df_filter['source_id'])
         self.data_path = data_path = '/home/peng/Documents/NLP/dataset/NewsAPI/'
         
-    def refresh_string(self):  
-        self.title_string = []
-        self.detail_string = []
-        self.time_string = []
-        self.url_string =[]
-        self.source_string =[] 
+    def refresh_string(self): 
+        self.__init__(self.df_filter) 
+        #------------------------------------------------ self.title_string = []
+        #----------------------------------------------- self.detail_string = []
+        #------------------------------------------------- self.time_string = []
+        #--------------------------------------------------- self.url_string =[]
+        #------------------------------------------------ self.source_string =[]
         
     def query(self, source, sortby='top'):       
         url = 'https://newsapi.org/v1/articles?'
@@ -65,7 +66,7 @@ class request_news:
                                      'detail':self.detail_string, 'time':self.time_string, 'url': self.url_string})
                         
         time_now = strftime("%Y-%m-%d-%H-%M-%S", localtime())
-        df_saved_news.to_csv(self.data_path + time_now[:-6]+'.csv', header = True)
+        df_saved_news.to_csv(self.data_path + time_now[:-9]+'.csv', header = True)
         print ('file saved')          
         
     def request_all(self,rolling = True):    
@@ -87,8 +88,8 @@ class request_news:
                     end_day = strftime("%Y-%m-%d-%H-%M-%S", localtime())
                     if (len(self.title_string)%400 == 0):
                         self.save_news()
-                    if  end_day[-8:-6]== '23':
-                        sleep(60*60*1)
+                    if  end_day[-8:-6] in ['23', '00']:
+                        sleep(60*60*1.5)
                         self.refresh_string() 
                         
 def run():
@@ -116,8 +117,8 @@ def run():
         return  df_filter  
     
     
-    time_interval = 60*60
-    mining_period = 60*60*36
+    time_interval = 60*60*1.5
+    mining_period = 60*60*24*7
     
     
     df_filter = source_list()
