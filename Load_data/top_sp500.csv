@@ -1,0 +1,11 @@
+,top_sp500_2002,top_sp500_2003,top_sp500_2004,top_sp500_2005,top_sp500_2006,top_sp500_2007,top_sp500_2008,top_sp500_2009,top_sp500_2010,top_sp500_2011,top_sp500_2012,top_sp500_2013
+0,microsoft,general electric,general electric,general electric,exxon mobil,exxon mobil,exxon mobil,exxon mobil,exxon mobil,exxon mobil,apple,apple
+1,general electric,microsoft,exxon mobil,exxon mobil,general electric,general electric,wal-mart stores,microsoft,apple,apple,exxon mobil,exxon mobil
+2,exxon mobil,exxon mobil,microsoft,microsoft,microsoft,microsoft,procter & gamble,wal-mart stores,microsoft,microsoft,microsoft,google
+3,wal-mart stores,pfizer,citigroup,citigroup,citigroup,AT&T,microsoft,google,Berkshire Hathaway,ibm,general electric,microsoft
+4,pfizer,citigroup,wal-mart stores,procter & gamble,bank of america,procter & gamble,AT&T,apple,general electric,chevron corp,ibm,general electric
+5,citigroup,wal-mart stores,pfizer,wal-mart stores,procter & gamble,google,johnson & johnson,johnson & johnson,wal-mart stores,google,chevron corp,johnson & johnson
+6,johnson & johnson,intel,bank of america,bank of america,wal-mart stores,chevron,general electric,procter & gamble,google,wal-mart stores,johnson & johnson,chevron corp
+7,aig,aig,johnson & johnson,johnson & johnson,johnson & johnson,johnson & johnson,chevron corp,ibm,chevron corp,general electric,AT&T,procter & gamble
+8,ibm,ibm,aig,aig,pfizer,wal-mart stores,pfizer,AT&T,ibm,Berkshire Hathaway,procter & gamble,JPMorgan Chase
+9,merck,cisco systems,ibm,pfizer,aig,bank of america,JPMorgan Chase,JPMorgan Chase,procter & gamble,procter & gamble,pfizer,Wells Fargo
