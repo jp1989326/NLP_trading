@@ -118,7 +118,7 @@ def run():
     
     
     time_interval = 60*60*1.5
-    mining_period = 60*60*24*7
+    mining_period = 60*60*24*14
     
     
     df_filter = source_list()
