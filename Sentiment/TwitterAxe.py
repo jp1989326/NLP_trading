@@ -11,6 +11,8 @@ from pandas               import DataFrame
 from time                 import time, gmtime, localtime, strftime, sleep
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 import schedule
+import tweepy
+from tweepy import OAuthHandler
 
 def filter(text):
     text = text.lower()
@@ -47,11 +49,34 @@ def sentimentScore(texts):
         if score != 0: scores.append(score)
     try: return round(sum(scores)/len(scores),3)
     except ZeroDivisionError: return 0
+ 
+ 
+class MyStreamListener(tweepy.StreamListener):
+    def __init__(self, limit = 20, api=None):
+        
+        super(MyStreamListener, self).__init__()
+        self.num_tweets = 0
+        self.collection = []
+        self.limit = limit
+
+    def on_status(self, status):
+        record = {'text': status.text, 'time': status.created_at}
+        self.num_tweets += 1
+        if self.num_tweets <= self.limit:
+            self.collection.append(record)
+            return True
+        else:
+            return False        
      
-class TwitterAxe:
+    def get_tweets(self):
+        return self.collection
+ 
+     
+class TwitterPast:
     
     def __init__(self, userCredentials):
-        self.credentials = Twitter(auth=OAuth(userCredentials[0], userCredentials[1], userCredentials[2], userCredentials[3]))
+        self.credentials = Twitter(auth=OAuth(userCredentials[2], userCredentials[3],\
+                                               userCredentials[0], userCredentials[1]))
         self.query            = ""
         self.amount           = 50
         self.cutoff           = 90
@@ -116,7 +141,7 @@ class TwitterAxe:
             schedule.run_pending()
             
         endStr = strftime("[%Y/%m/%d %I:%M:%S %p]", localtime())
-        print ("Mine complete from\n" + startStr +" - " + endStr +"\n")
+#        print ("Mine complete from\n" + startStr +" - " + endStr +"\n")
  
     def mine_past(self, query, requestAmount = 50, similarityCutoff = 90,\
                   date='2017-01-01' ):
@@ -128,7 +153,7 @@ class TwitterAxe:
         self.requestTweets_past() 
         self.analyzeGroup()     
 
-        print ("Mine complete till\n" + date +"\n")
+#        print ("Mine complete till\n" + date +"\n")
          
 #    def mine_id
     
@@ -242,3 +267,64 @@ class TwitterAxe:
         plt.ylim(ymin=0)
         plt.tight_layout()
         plt.show()
+        
+        
+#===============================================================================
+# class TwitterLive:
+#     def __init__(self, userCredentials):
+#         auth = OAuthHandler(userCredentials[0], userCredentials[1])
+#         auth.set_access_token(userCredentials[2], userCredentials[3])
+#         api = tweepy.API(auth)
+#         self.mymy = MyStreamListener(limit=20)
+#         self.myStream = tweepy.Stream(auth = api.auth, listener=self.mymy)
+#         self.tweets = []
+#         self.query = ''
+#     def requestTweets_live(self, query):
+#         self.query = query               
+#         self.myStream.filter(track=[self.query])
+#         self.tweets = self.mymy.collection
+#         
+#     def get_tweepy(self):
+#         return self.mymy.collection    
+#===============================================================================
+    
+    
+    
+class TwitterLive(TwitterPast):
+    def __init__(self, userCredentials):
+        super(TwitterLive, self).__init__(userCredentials)
+        auth = OAuthHandler(userCredentials[0], userCredentials[1])
+        auth.set_access_token(userCredentials[2], userCredentials[3])
+        self.api = tweepy.API(auth)
+        
+        #=======================================================================
+        # self.mymy = MyStreamListener(limit=20)
+        # self.myStream = tweepy.Stream(auth = api.auth, listener=self.mymy)
+        #=======================================================================
+        self.tweets = []
+
+    def mine_live(self, query, minePeriod, requestFrequency, analyzeFrequency, requestAmount = 50, similarityCutoff = 90):
+        self.query = query
+        self.cutoff = similarityCutoff
+        self.amount = requestAmount
+        self.mymy = MyStreamListener(limit=self.amount)
+        api = self.api
+        self.myStream = tweepy.Stream(auth = api.auth, listener=self.mymy)
+        startStr = strftime("[%Y/%m/%d %I:%M:%S %p]", localtime())
+        schedule.every(requestFrequency).seconds.do(self.requestTweets_live)
+        schedule.every(analyzeFrequency).seconds.do(self.analyzeGroup)
+        
+        end = time()+minePeriod
+        while time() <= end:
+            schedule.run_pending()
+            
+        endStr = strftime("[%Y/%m/%d %I:%M:%S %p]", localtime())
+        
+    def requestTweets_live(self):            
+        self.myStream.filter(languages=["en"], track=[self.query])
+        self.tweets = self.mymy.collection
+        self.tweet_process(self.tweets)
+        
+    def get_tweepy(self):
+        return self.mymy.collection      
+                  
