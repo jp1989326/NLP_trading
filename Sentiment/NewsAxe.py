@@ -28,7 +28,7 @@ def stock_score(date, key_words=['']):
     read = read_news.read_reuters(file_date = date)
     key_string = read.locate_key(key_words)
     score = Twa.sentimentScore(key_string)  
-    return score  
+    return score
 
 '''get the scores for multiple companies/stocks... elements_list must be in [[''], [''], ['']] format'''
 def multistocks_score(date, elements_list):
