@@ -90,6 +90,7 @@ class TwitterPast:
         self.until =''
         
     def tweet_process(self, tweets):   
+        
          
         for tweet in tweets:
             tweet = tweet['text']
@@ -122,10 +123,13 @@ class TwitterPast:
         self.tweet_process(tweets)
     
     def analyzeGroup(self):
+#        print ('length of groupedTweets is ', len(self.groupedTweets))
         self.timeSeries.append({ "time"      : strftime("%I:%M:%S %p", localtime()),
+                                 "query"      : self.query,                                
                                  "sentiment" : sentimentScore(self.groupedTweets), 
                                  "tweets"    : len(self.groupedTweets)})             
         self.groupedTweets = []
+        
 
     def mine_live(self, query, minePeriod, requestFrequency, analyzeFrequency, requestAmount = 50, similarityCutoff = 90):
         self.query = query
@@ -189,7 +193,7 @@ class TwitterPast:
     
     def showTimeSeries(self):
         print ("\033[1m"+"Time Series"+"\033[0m")
-        columns = ["time", "sentiment", "tweets"]
+        columns = ["time", "query","sentiment", "tweets"]
         print (DataFrame(self.timeSeries, columns=columns))
 #        print
     
@@ -309,21 +313,33 @@ class TwitterLive(TwitterPast):
         self.amount = requestAmount
         self.mymy = MyStreamListener(limit=self.amount)
         api = self.api
-        self.myStream = tweepy.Stream(auth = api.auth, listener=self.mymy)
+        self.myStream = tweepy.Stream(auth = api.auth, listener=self.mymy,
+                                     timeout=15)
+    
         startStr = strftime("[%Y/%m/%d %I:%M:%S %p]", localtime())
         schedule.every(requestFrequency).seconds.do(self.requestTweets_live)
-        schedule.every(analyzeFrequency).seconds.do(self.analyzeGroup)
+#        schedule.every(analyzeFrequency).seconds.do(self.analyzeGroup)
         
         end = time()+minePeriod
         while time() <= end:
+            #-------------------------------------------------------------- try:
+                #---------------------------------------- schedule.run_pending()
+            #----------------------------------------------------------- except:
+                #----------------------------------- print ('just confirmed it')
             schedule.run_pending()
             
+          
         endStr = strftime("[%Y/%m/%d %I:%M:%S %p]", localtime())
-        
-    def requestTweets_live(self):            
-        self.myStream.filter(languages=["en"], track=[self.query])
-        self.tweets = self.mymy.collection
-        self.tweet_process(self.tweets)
+        self.analyzeGroup()   
+    def requestTweets_live(self):       
+        try:
+            self.myStream.filter(languages=["en"], track=[self.query])
+    #        self.myStream.sample(languages=["en"], track=[self.query])
+            self.tweets = self.mymy.collection
+            self.tweet_process(self.tweets)
+        except:
+            print ("No results found")    
+            
         
     def get_tweepy(self):
         return self.mymy.collection      
